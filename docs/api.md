@@ -156,6 +156,20 @@ Return
 - a string for the value
 - nil if not found
 
+###  envoy.req.set_dynamic_metadata(key, value, filter_name)
+
+设置 filter 中的 动态 metadata , 目前只支持获取 `string`
+
+Parameter
+
+- key:  string, key specifies key of the value
+- value:  string, value specifies metadata value
+- filter_name: string, filter_name specifies from which filter to set dynamic metadata
+
+Return
+
+- No return value
+
 ### envoy.req.set_header(name, value)
 
 设置一个 header,  如果原来存在则覆盖
