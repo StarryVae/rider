@@ -39,6 +39,10 @@ ffi.cdef[[
     int64_t envoy_http_lua_ffi_v2_get_current_time_milliseconds();
     void envoy_http_lua_ffi_v2_file_log(const char *buf, size_t len);
     void envoy_http_lua_ffi_v2_clear_route_cache();
+    int envoy_http_lua_ffi_v2_get_downstream_data(envoy_lua_ffi_str_t* data);
+    int envoy_http_lua_ffi_v2_get_upstream_data(envoy_lua_ffi_str_t* data);
+    bool envoy_http_lua_ffi_v2_is_downstream_data_end();
+    bool envoy_http_lua_ffi_v2_is_upstream_data_end();
 ]]
 
 local table_elt_type = ffi.typeof("envoy_lua_ffi_table_elt_t*")
@@ -184,6 +188,24 @@ local function remove_header_map_value(source, key)
     if rc ~= FFI_OK then
         error("error remove header")
     end
+end
+
+local function get_downstream_data()
+    local buffer = ffi_new("envoy_lua_ffi_str_t[1]")
+    local rc = C.envoy_http_lua_ffi_v2_get_downstream_data(buffer)
+    if rc ~= FFI_OK then
+        return nil
+    end
+    return ffi_str(buffer[0].data, buffer[0].len)
+end
+
+local function get_upstream_data()
+    local buffer = ffi_new("envoy_lua_ffi_str_t[1]")
+    local rc = C.envoy_http_lua_ffi_v2_get_upstream_data(buffer)
+    if rc ~= FFI_OK then
+        return nil
+    end
+    return ffi_str(buffer[0].data, buffer[0].len)
 end
 
 function envoy.req.get_header_map_size()
@@ -467,4 +489,20 @@ end
 
 function envoy.req.clear_route_cache()
     C.envoy_http_lua_ffi_v2_clear_route_cache()
+end
+
+function envoy.get_downstream_data()
+    return get_downstream_data()
+end
+
+function envoy.get_upstream_data()
+    return get_upstream_data()
+end
+
+function envoy.is_downstream_data_end()
+    return C.envoy_http_lua_ffi_v2_is_downstream_data_end()
+end
+
+function envoy.is_upstream_data_end()
+    return C.envoy_http_lua_ffi_v2_is_upstream_data_end()
 end
