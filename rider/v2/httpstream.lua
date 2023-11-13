@@ -40,7 +40,27 @@ ffi.cdef[[
     int64_t envoy_http_lua_ffi_v2_get_current_time_milliseconds();
     void envoy_http_lua_ffi_v2_file_log(const char *buf, size_t len);
     void envoy_http_lua_ffi_v2_clear_route_cache();
+    int envoy_http_lua_ffi_v2_get_string_filter_state(envoy_lua_ffi_str_t* key,  envoy_lua_ffi_str_t* value);
+    int envoy_http_lua_ffi_v2_set_string_filter_state(envoy_lua_ffi_str_t* key,  envoy_lua_ffi_str_t* value, int state_type, int life_span, int stream_sharing);
 ]]
+
+state_type = {
+    StateTypeReadOnly = 0,
+    StateTypeMutable  = 1
+}
+
+life_span = {
+    LifeSpanFilterChain = 0,
+    LifeSpanRequest     = 1,
+    LifeSpanConnection  = 2,
+    LifeSpanTopSpan     = 3
+}
+
+stream_sharing = {
+    None                             = 0,
+    SharedWithUpstreamConnection     = 1,
+    SharedWithUpstreamConnectionOnce = 2
+}
 
 local table_elt_type = ffi.typeof("envoy_lua_ffi_table_elt_t*")
 local table_elt_size = ffi.sizeof("envoy_lua_ffi_table_elt_t")
@@ -494,4 +514,38 @@ end
 
 function envoy.req.clear_route_cache()
     C.envoy_http_lua_ffi_v2_clear_route_cache()
+end
+
+function envoy.req.get_string_filter_state(key)
+    if type(key) ~= "string" then
+        error("filter state key must be a string", 2)
+    end
+
+    local key_ = ffi_new("envoy_lua_ffi_str_t[1]", { [0] = {#key, key} })
+    local value = ffi_new("envoy_lua_ffi_str_t[1]")
+    local rc = C.envoy_http_lua_ffi_v2_get_string_filter_state(key_, value)
+
+    if rc == FFI_OK then
+        return ffi_str(value[0].data, value[0].len)
+    end
+
+    return nil
+end
+
+function envoy.req.set_string_filter_state(key, value, state_type, life_span, stream_sharing)
+    if type(key) ~= "string" then
+        error("filter state key must be a string", 2)
+    end
+
+    if type(value) ~= "string" then
+        error("filter state value must be a string", 2)
+    end
+
+    local key_ = ffi_new("envoy_lua_ffi_str_t[1]", { [0] = {#key, key} })
+    local value_ = ffi_new("envoy_lua_ffi_str_t[1]", { [0] = {#value, value} })
+    local rc = C.envoy_http_lua_ffi_v2_set_string_filter_state(key_, value_, state_type, life_span, stream_sharing)
+
+    if rc ~= FFI_OK then
+        error("error set filter state")
+    end
 end
